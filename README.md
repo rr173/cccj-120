@@ -10,7 +10,9 @@
 
 ```
 archivestore/      可导入模块
+warcdb/            离线采集事实库（WARC 解析 + SQLite 事实库，见 WARCDB.md）
 demo/              可复做的端到端演练（run_demo.py）+ 独立参考解密器（refdec.py）
+                   + 事实库演练（run_warc_demo.py）
 tests/             pytest 回归测试
 ```
 
@@ -196,7 +198,7 @@ python -m archivestore --storage S list
 ## 6. 复做演练与测试
 
 ```
-python3 -m pytest tests/ -q      # 16 个回归测试
+python3 -m pytest tests/ -q      # 88 个回归测试
 python3 demo/run_demo.py         # 端到端演练（约 1 分钟，工作区保留在 /tmp 下）
 ```
 
@@ -207,3 +209,20 @@ python3 demo/run_demo.py         # 端到端演练（约 1 分钟，工作区保
 新密钥可读回；在轮换提交两侧分别 SIGKILL 后重开只见全旧/全新；已解封读者
 跨过轮换继续读；64 MiB 大原件的峰值内存与窄范围真实 I/O 受块长 B 支配
 （B=1MiB 时 seal 峰值 RSS ≈33 MiB，B=8MiB 时 ≈68 MiB，与总档案长度无关）。
+
+---
+
+## 7. 离线采集事实库 warcdb
+
+采集组把多轮网页抓取的 WARC 原件 seal 进本档案库之后，`warcdb/` 负责把
+已登记的 archive_id 解析成可按"网址 + 抓取时刻"查询的事实库：严格按
+Content-Length 界定 WARC 记录边界，处理 response 与 revisit（含跨档案、
+多层、迟到的引用），把每次抓取的身份、网址、时间、HTTP 状态与头、引用
+边、解析状态、正文来源 archive_id 与精确字节区间存进独立 SQLite 文件
+（不复制正文、不存密钥），并提供引用链查询、按时刻选择最新抓取、以及
+沿来源区间核对摘要后的正文导出。格式约定、选择规则与诊断分类见
+**[WARCDB.md](WARCDB.md)**；端到端演练：
+
+```
+python3 demo/run_warc_demo.py
+```

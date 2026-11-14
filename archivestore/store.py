@@ -519,6 +519,24 @@ class ArchiveHandle:
             ) from None
 
     # -- public --------------------------------------------------------------
+    def iter_blocks(self):
+        """Yield (index, plaintext) for every content block, in order.
+
+        Streaming companion to verify(): each block is authenticated and
+        decrypted on demand, so at most one block of plaintext is held in
+        memory at a time.  Intended for consumers that parse an archive
+        sequentially (e.g. the warcdb fact-store importer) without
+        materialising the whole plaintext anywhere.
+        """
+        self._check_blob_size()
+        fd = os.open(self._blob, os.O_RDONLY)
+        try:
+            for index in range(layout.FIRST_CONTENT_INDEX,
+                               self._desc.block_count + 1):
+                yield index, self._read_block(fd, index)
+        finally:
+            os.close(fd)
+
     def read_range(self, start: int, end: int, out_path: PathLike) -> ReadStats:
         """Write plaintext of [start, end) to `out_path` (must not exist).
 

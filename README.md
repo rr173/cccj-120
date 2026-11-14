@@ -15,11 +15,13 @@ eventledger/       离线爬虫运行事件账本（JSONL → SQLite，见 event
 robots_admission/  可解释的 robots.txt 抓取准入模块（见 robots_admission/README.md）
 tableextract/      离线网页数据表提取器（本地 HTML → 矩形数据，见第 9 节）
 sitemapdiscover/   从站点地图发现待抓网页（根地图 + 本地映射 → 去重清单，见第 10 节）
+batchfetch/        有预算的批量网页抓取执行器（JSONL 清单 + 每站预算 → 真实 HTTP，见第 11 节）
 demo/              可复做的端到端演练（run_demo.py）+ 独立参考解密器（refdec.py）
                    + 事实库演练（run_warc_demo.py）+ 账本演练（run_eventledger_drill.py）
                    + 抓取准入演练（run_robots_drill.py）
                    + 数据表提取演练（run_table_drill.py，夹具在 demo/table_fixtures/）
                    + 站点地图发现演练（run_sitemap_drill.py，夹具在 demo/sitemap_fixtures/）
+                   + 批量抓取接手演练（run_batchfetch_drill.py）
 tests/             pytest 回归测试
 ```
 
@@ -433,3 +435,49 @@ python3 -m unittest tests.test_sitemapdiscover -v
 
 完整命令、退出码与失败含义、内存构成见
 **[sitemapdiscover/README.md](sitemapdiscover/README.md)**。
+
+---
+
+## 11. 批量网页抓取执行器 batchfetch
+
+候选清单不能直接塞给抓取进程：同一站点的请求挤在一起会占满连接，一个慢
+站点还会拖住其他站点。`batchfetch/` 接收本地 UTF-8 JSONL 清单（每行唯一
+`job_id` 与绝对 URL，顺序即接收顺序）和每站预算，用 Python 标准库**真正
+发出 HTTP 请求**，并留下每个候选的终结果与实际交换时间线。
+
+要点：
+
+- 全局在途上限、每 origin 在途上限与相邻请求**实际开始**时刻的最小间隔、
+  单请求超时、响应体字节上限、最多跳转次数均可配置。http/https、不同端口
+  各占预算；地址沿用仓库统一规范化，路径和 query 不会为排队被改写。非法或
+  重复 `job_id`、非法 URL、非正并发等在**出网前**拒绝。
+- 一次交换从请求头发出前同时占用全局与目标 origin 名额，直到正文读完或失败
+  才释放；间隔按单调时钟的真实开始时刻计算。各 origin 间轮转派发、origin
+  内严格 FIFO；队头站点等待时继续检查其他站点；工作线程不会先占全局名额再
+  睡间隔。时钟与唤醒方式可注入，单测不靠几十秒 sleep。
+- 跳转是同一作业的后续请求而非 HTTP 库隐式行为：只跟 301/302/303/307/308，
+  解析相对 Location 并记录每一跳；缺/非法 Location、非 HTTP 目标、超跳数、
+  回到本作业已请求地址均明确失败。每跳释放原 origin 名额后按真实目标 origin
+  重新排队，跳转不能握旧名额、也不能插到目标队列先到作业前。
+- 正文分块边读边算 SHA256 与字节数，整份正文不驻留内存、不保存正文；空体有
+  确定摘要；超字节上限、声明 Content-Length 却提前断流都不是完整响应。
+  4xx/5xx 作为已取得响应返回不重试；连接失败/读超时是抓取失败，其他作业继续。
+- API 可取消、命令行支持 SIGINT：取消后不启动排队请求或新跳转，已开始的交换
+  在既定超时内收尾，未开始作业明确标记取消（不伪装成超时或 404），已完成
+  结果原样保留；同进程再开新批次无泄漏名额或后台线程。
+- 报告按输入顺序为每个 `job_id` 写恰好一条终结果（complete/failed/cancelled
+  三类汇总分开），另附实际交换时间线（开始/结束/origin/当时占用/等待理由），
+  可与服务端接收记录核对；含失败也写全量结果且进程返回非零。
+
+```
+python3 -m batchfetch run --manifest jobs.jsonl --report report.jsonl \
+        --global-inflight 4 --origin-inflight 2 --origin-min-interval 0.25 \
+        --request-timeout 10 --max-body-bytes 4194304 --max-redirects 5
+python3 -I demo/run_batchfetch_drill.py          # 32 项双端口真实 HTTP 演练
+PYTHONPATH=. python3 -m unittest tests.test_batchfetch_validation \
+    tests.test_batchfetch_scheduler tests.test_batchfetch_redirects \
+    tests.test_batchfetch_http tests.test_batchfetch_cli   # 49 项回归
+```
+
+完整配置、命令、时间基准、退出码含义与取消边界见
+**[batchfetch/README.md](batchfetch/README.md)**。

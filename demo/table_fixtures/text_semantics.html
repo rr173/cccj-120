@@ -1,0 +1,12 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head><meta charset="utf-8"><title>文本规则演示</title></head>
+<body>
+  <table id="text-cells">
+    <tr><th>项目</th><th>说明</th></tr>
+    <tr><td>能耗</td><td>煤&amp;电 <b>合计</b>：<br>  1234   吨</td></tr>
+    <tr><td>代号</td><td>a&nbsp;b<!-- 隐藏的注释 -->&nbsp;&nbsp;c</td></tr>
+    <tr><td>混入</td><td>前<script>var x = "不应出现";</script>后<style>.y { color: red; }</style>尾</td></tr>
+  </table>
+</body>
+</html>

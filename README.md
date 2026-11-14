@@ -13,9 +13,11 @@ archivestore/      可导入模块
 warcdb/            离线采集事实库（WARC 解析 + SQLite 事实库，见 WARCDB.md）
 eventledger/       离线爬虫运行事件账本（JSONL → SQLite，见 eventledger/README.md）
 robots_admission/  可解释的 robots.txt 抓取准入模块（见 robots_admission/README.md）
+tableextract/      离线网页数据表提取器（本地 HTML → 矩形数据，见第 9 节）
 demo/              可复做的端到端演练（run_demo.py）+ 独立参考解密器（refdec.py）
                    + 事实库演练（run_warc_demo.py）+ 账本演练（run_eventledger_drill.py）
                    + 抓取准入演练（run_robots_drill.py）
+                   + 数据表提取演练（run_table_drill.py，夹具在 demo/table_fixtures/）
 tests/             pytest 回归测试
 ```
 
@@ -249,3 +251,138 @@ origin、缓存表示、有效期限、选中组与命中规则的原文和行�
 ```
 python3 -I demo/run_robots_drill.py
 ```
+
+---
+
+## 9. 离线网页数据表提取器 tableextract
+
+采集人员下载的公开统计网页里，表格常把地区名跨多行、年份标题横跨
+数列；直接按每个 `tr` 的 `td` 顺序取数会把指标挪到错误的列。
+`tableextract/` 用 Python 标准库读取本地 UTF-8 HTML，把选定的一张
+`table` 还原成矩形数据，并保留每个值来自哪个原始单元格。它是纯
+"本地字节进、结构化数据出"的组件：**不发网络请求，也不接入
+archivestore 档案加密、warcdb 抓取事实库、eventledger 事件账本或
+robots_admission 缓存**；不引入浏览器、外部 HTML 服务或网页解析依赖。
+
+### 9.1 支持的 HTML 子集（显式闭合，不做浏览器式修复）
+
+- 标签名与属性名不区分大小写；属性值按原值比较（区分大小写）。
+- 文档必须显式闭合：每个非空元素（void 元素如 `br`/`img`/`meta`
+  除外）都要有匹配的结束标签；`<tag/>` 视为立即闭合的完整元素。
+- 选中表格内：`<table>` 下只允许 `thead`/`tbody`/`tfoot`/`tr`，
+  行组下只允许 `tr`，`tr` 下只允许 `td`/`th`；连续的直接 `tr`
+  构成一个隐式行组；`caption`/`colgroup` 等不在子集内。
+- 单元格内容是行内标记，可再嵌套 `<table>`；内层表格是一张独立的
+  表（可按自己的 id 单独提取），其内容不进入外层单元格，也不增加
+  外层的行数或列数。
+- 选中表格出现缺失闭合、非法嵌套、文本/标签错位时，按行号定位并
+  拒绝，**不悄悄补一个看似正常的数据集**；子集之外的任意坏标签不
+  保证被接受。
+
+### 9.2 文本规则
+
+行内标签只贡献文字；字符实体解码；每个 `br` 视为一个空格；连续
+ASCII 空白（空格/制表/换行/回车/换页）折成一个空格并去掉首尾空白
+（`&nbsp;` 是 U+00A0，不参与折叠，会被保留）。注释、`script`、
+`style` 的内容不算数据。空单元格是真实存在的源单元格（文本为
+`""`），与补齐出来的 `null` 缺口严格区分。
+
+### 9.3 矩形化规则
+
+- `rowspan`/`colspan` 缺省为 1；属性值去掉首尾 ASCII 空白后必须是
+  十进制非负整数，`colspan` 必须大于 0，`rowspan` 可以为 0；属性
+  重复出现即拒绝。
+- 每行的源单元格按文档顺序从该行最左边尚未占用的列落位，再按声明
+  跨度占据矩形；不会为绕开中间占位而把 `colspan` 拆成几段。与先前
+  跨行单元格发生覆盖时拒绝，报告两个源单元格与冲突坐标，不采用
+  后者覆盖前者。
+- `thead`、每个 `tbody`、`tfoot` 各自构成行组（相邻两个 `tbody`
+  不是同一组）；无行组标签的连续直接 `tr` 构成隐式行组。正数
+  `rowspan` 超过本组最后一行即拒绝；`rowspan=0` 延伸到本组末行，
+  绝不流进下一组。
+- 所有行最后补齐到本表最大列数，缺位为 `null`（不引用虚构的空
+  单元格）。坐标一律从 0 开始，指展开后的表格位置；被跨度覆盖的
+  位置引用原源单元格，不额外造出多个源单元格。
+
+### 9.4 标题与数据
+
+`header_rows` 指定文档顺序中前多少行为列标题（0 表示没有标题；
+超过实际行数报错）。跨行单元格不得同时覆盖标题行和数据行。每列
+的标题路径从上往下收集相应标题位置的源单元格文字：空文字略去；
+同一源单元格因 `rowspan` 在该列重复出现时只收一次；两个不同源
+单元格文字碰巧相同仍分别保留；横跨多列的标题进入每个相关列的
+路径。不猜测哪一行才是"真标题"，也不把 `tbody` 里的 `th` 自动
+删成表头。
+
+### 9.5 上限（超限在分配巨大网格之前报错）
+
+输入不超过 4 MiB；结果不超过 10000 行、256 列、2 000 000 个网格
+位置。非法 UTF-8、重复/负数/小数跨度、布局冲突等失败都带目标表格
+id、来源行号和具体原因。
+
+### 9.6 API
+
+```python
+from tableextract import extract_table, TableExtractError
+
+try:
+    res = extract_table(html_bytes, "regional-stats", header_rows=2)
+except TableExtractError as exc:
+    print(exc)          # [table 'regional-stats'; line 30, col 8] 具体原因
+else:
+    res.n_rows, res.n_cols          # 表格尺寸（展开后）
+    res.row_groups                  # [RowGroupInfo(index, kind, rows, first_row)]
+    res.source_cells[12].text       # 源单元格：按出现顺序编号
+    res.source_cells[12].kind       #   "td" | "th"
+    res.source_cells[12].row_group  #   所在行组编号（kind 另存）
+    (res.source_cells[12].row, res.source_cells[12].col)      # 左上坐标
+    (res.source_cells[12].span_rows, res.source_cells[12].span_cols)  # 实际跨度
+    (res.source_cells[12].line, res.source_cells[12].col_offset)      # 源位置
+    res.grid[r][c]                  # 单元格引用矩阵：源单元格编号或 None
+    res.header_paths[c]             # 每列标题路径 [HeaderEntry(cell, text)]
+    res.data_rows[i].values         # 数据行展开文本值（缺口为 None）
+    res.data_rows[i].cells          # 对应源单元格编号（缺口为 None）
+    res.to_dict()                   # 以上全部的可 JSON 化字典
+```
+
+相同输入重复提取的编号与结果顺序稳定一致。参数校验：`html_bytes`
+必须是字节，`table_id` 必须是 `str`，`header_rows` 必须是非负
+`int`（负数/小数/布尔报 `ValueError`）。
+
+### 9.7 命令行
+
+```
+python3 -m tableextract 页面.html --table-id regional-stats --header-rows 2
+```
+
+成功时把完整结果 JSON 写到标准输出；失败时把 `{"error": ...}` 写到
+标准错误并以非零码退出，**不在标准输出留下可当成成功数据的半份
+结果**。
+
+### 9.8 错误类型（均为 `TableExtractError` 子类）
+
+`InputTooLargeError`（输入超 4 MiB）、`InvalidUtf8Error`、
+`TableNotFoundError`、`DuplicateTableIdError`、
+`HtmlStructureError`（缺失闭合/非法嵌套/结构错位）、
+`SpanAttributeError`（重复/非法跨度）、`LayoutConflictError`
+（跨度占位冲突，附冲突坐标与双方源行号）、
+`RowspanOutOfGroupError`（正数 rowspan 越出本行组）、
+`HeaderRowsError`（header_rows 超行数）、`HeaderBoundaryError`
+（跨行单元格压标题/数据边界）、`ResultLimitError`（行/列/格位置
+超限）。
+
+### 9.9 演练与回归测试
+
+```
+python3 -I demo/run_table_drill.py   # 93 项检查，夹具在 demo/table_fixtures/
+python3 -m pytest tests/ -q          # 含 tests/test_tableextract.py
+```
+
+演练覆盖：地区列跨行 + 两层"年份/指标"跨列表头的逐格坐标核对；
+`rowspan=0` 在两个 `tbody` 之间停止；内外表格各自提取；实体/`br`/
+注释/`script`/`style` 的文本规则；真实空单元格与 `null` 缺口的
+区分；无表头与 `tbody` 内 `th` 的保留；横跨单元格撞上前一行占位
+的拒绝（证明不会生成错列结果）；跨度越组、跨标题/数据边界、坏
+结构、重复 id、错误跨度、输入与网格上限的拒绝；以及 CLI 成功/
+失败两条路径。所有预期坐标、标题路径和值都在演练脚本里人工列出，
+不靠再次调用布局函数生成。

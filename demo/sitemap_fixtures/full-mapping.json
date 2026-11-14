@@ -1,0 +1,17 @@
+{
+  "files": [
+    {"source_url": "https://fail.example.com/maps/fail-root.xml", "path": "full-fail-root.xml"},
+    {"source_url": "https://fail.example.com/maps/good-1.xml", "path": "full-good-1.xml"},
+    {"source_url": "https://fail.example.com/maps/good-2.xml", "path": "full-good-2.xml"},
+    {"source_url": "https://fail.example.com/maps/broken-tail.xml", "path": "full-broken-tail.xml"},
+    {"source_url": "https://fail.example.com/maps/crc-bad.xml.gz", "path": "full-crc-bad.xml.gz"},
+    {"source_url": "https://fail.example.com/maps/dup-fields.xml", "path": "full-dup-fields.xml"},
+    {"source_url": "https://fail.example.com/maps/bad-date.xml", "path": "full-bad-date.xml"},
+    {"source_url": "https://fail.example.com/maps/cross-origin.xml", "path": "full-cross-origin.xml"},
+    {"source_url": "https://fail.example.com/maps/empty.xml", "path": "full-empty.xml"},
+    {"source_url": "https://fail.example.com/maps/cycle-a.xml", "path": "full-cycle-a.xml"},
+    {"source_url": "https://fail.example.com/maps/cycle-b.xml", "path": "full-cycle-b.xml"},
+    {"source_url": "https://fail.example.com/maps/shared-leaf.xml", "path": "full-shared-leaf.xml"},
+    {"source_url": "https://fail.example.com/maps/concat.xml.gz", "path": "full-concat.xml.gz"}
+  ]
+}

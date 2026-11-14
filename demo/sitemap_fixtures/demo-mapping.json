@@ -1,0 +1,9 @@
+{
+  "files": [
+    {"source_url": "https://shop.example.com/maps/root-a.xml", "path": "story-root-a.xml"},
+    {"source_url": "https://shop.example.com/maps/root-b.xml", "path": "story-root-b.xml"},
+    {"source_url": "https://shop.example.com/maps/shared.xml.gz", "path": "story-shared.xml.gz"},
+    {"source_url": "https://shop.example.com/maps/sub-index.xml", "path": "story-sub.xml"},
+    {"source_url": "https://shop.example.com/maps/leaf-c.xml", "path": "story-leaf-c.xml"}
+  ]
+}

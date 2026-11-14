@@ -1,0 +1,3 @@
+# 采集组拿到的两个根索引，按此顺序遍历
+https://shop.example.com/maps/root-a.xml
+https://shop.example.com/maps/root-b.xml

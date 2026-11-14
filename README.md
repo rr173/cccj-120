@@ -14,10 +14,12 @@ warcdb/            离线采集事实库（WARC 解析 + SQLite 事实库，见 
 eventledger/       离线爬虫运行事件账本（JSONL → SQLite，见 eventledger/README.md）
 robots_admission/  可解释的 robots.txt 抓取准入模块（见 robots_admission/README.md）
 tableextract/      离线网页数据表提取器（本地 HTML → 矩形数据，见第 9 节）
+sitemapdiscover/   从站点地图发现待抓网页（根地图 + 本地映射 → 去重清单，见第 10 节）
 demo/              可复做的端到端演练（run_demo.py）+ 独立参考解密器（refdec.py）
                    + 事实库演练（run_warc_demo.py）+ 账本演练（run_eventledger_drill.py）
                    + 抓取准入演练（run_robots_drill.py）
                    + 数据表提取演练（run_table_drill.py，夹具在 demo/table_fixtures/）
+                   + 站点地图发现演练（run_sitemap_drill.py，夹具在 demo/sitemap_fixtures/）
 tests/             pytest 回归测试
 ```
 
@@ -386,3 +388,48 @@ python3 -m pytest tests/ -q          # 含 tests/test_tableextract.py
 结构、重复 id、错误跨度、输入与网格上限的拒绝；以及 CLI 成功/
 失败两条路径。所有预期坐标、标题路径和值都在演练脚本里人工列出，
 不靠再次调用布局函数生成。
+
+
+## 10. 站点地图发现 sitemapdiscover
+
+采集组接手一个网站时拿到的往往只是几个根地图 URL，以及一份“URL → 本地
+已下载文件”的映射。`sitemapdiscover/` 沿地图索引深度优先找到真正的网页，
+产出**带来源**的抓取清单：同一网页只占一条记录，但保存在每张地图中的
+全部来源位置（source_url、条目序号、原始 loc、lastmod）；网页汇总日期取
+所有有效来源的最大日期。整个过程**不下载文件、不判断 robots 许可、不解释
+网页内容**。
+
+要点：
+
+- 根地址与地图内引用都必须是绝对 http(s) URL；scheme/主机/默认端口按统一
+  规则规范化，路径与 query 逐字节保留（`%2F` 与 `/` 是两个网页）。查映射、
+  合并重复网页都用同一身份规则；重复 `source_url` 属于配置冲突。
+- 地图只能是 UTF-8 XML 的 `urlset`/`sitemapindex`（正式命名空间）或单个
+  gzip member；gzip 按魔数判断。扩展命名空间的子树整体忽略，扩展里的
+  `loc` 不能冒充正式网址。重复/非法 `loc`、`lastmod`、DTD/实体、坏 XML、
+  非 UTF-8、gzip 截断/CRC 错/拼接/尾字节都有明确拒绝原因。
+- 每个地图只能引用同 origin 的下级地图和网页；跨 origin 会指出具体条目
+  并拒绝该地图。不同 origin 可各自作根，计数互不串用。
+- 深度以根为 0；根按给定顺序、地图内按条目顺序深度优先，索引可引用索引。
+  地图身份 `(origin, URL)` 每次运行最多解析一次；只有活动栈上的回边才是环
+  并打印完整链，共享子图只读一次。所有引用边（含重复边）都返回；缺来件、
+  超深度、超数量的分支都落到报告，`complete=false` 且 CLI 退出码非零。
+- 每份地图在解压、XML 尾部、全部条目都验证完后才在单个事务里提交；末尾
+  损坏或 gzip 校验失败不会让前面读出的网页生效。单图失败不影响其他独立
+  分支。报告列出根、已访问地图、引用边、失败节点与原因，并区分“实际读取
+  的不同地图数”与“引用条数”。
+- 流式解压/解析，大批中间状态放在**本次运行自建的临时 SQLite**（运行结束
+  删除，不是持久业务目录）。可调限额：单文件压缩字节、解压字节、每地图
+  条目数、不同地图数、引用深度、单个 loc 长度。`iter_pages()`/报告写出
+  逐条进行，不把全部网页读成列表。
+
+```
+python3 -m sitemapdiscover discover --roots roots.txt --mapping mapping.json \
+        --report report.jsonl
+python3 -m sitemapdiscover pages --report report.jsonl      # 逐条回放
+python3 -I demo/run_sitemap_drill.py                       # 78 项离线演练
+python3 -m unittest tests.test_sitemapdiscover -v
+```
+
+完整命令、退出码与失败含义、内存构成见
+**[sitemapdiscover/README.md](sitemapdiscover/README.md)**。

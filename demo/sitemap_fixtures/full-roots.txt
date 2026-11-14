@@ -1,0 +1,2 @@
+# 失败 / 边界演练的根：一个入口索引带出全部独立分支
+https://fail.example.com/maps/fail-root.xml

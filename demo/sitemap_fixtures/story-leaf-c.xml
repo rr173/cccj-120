@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  <url>
+    <loc>https://shop.example.com/products/widget</loc>
+    <lastmod>2026-05-20</lastmod>
+  </url>
+  <url>
+    <loc> https://shop.example.com/about?ref=sitemap </loc>
+    <lastmod>2026-02-01</lastmod>
+  </url>
+  <url>
+    <loc>https://shop.example.com/files/a%2Fb</loc>
+  </url>
+  <url>
+    <loc>https://shop.example.com/files/a/b</loc>
+    <lastmod>2026-01-31</lastmod>
+  </url>
+</urlset>

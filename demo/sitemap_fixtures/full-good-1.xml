@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
+        xmlns:ext="https://ext.example.com/extension/1.0">
+  <url>
+    <loc>https://fail.example.com/pages/alpha</loc>
+    <lastmod>2026-01-10</lastmod>
+  </url>
+  <url>
+    <!-- 扩展命名空间里的 loc 只是诱饵，整个子树必须忽略 -->
+    <ext:loc>https://evil.example.net/decoy</ext:loc>
+    <ext:lastmod>not-a-date</ext:lastmod>
+    <loc>https://fail.example.com/pages/beta</loc>
+  </url>
+  <url>
+    <loc>https://fail.example.com/pages/gamma</loc>
+    <priority>0.5</priority>
+    <changefreq>daily</changefreq>
+  </url>
+</urlset>

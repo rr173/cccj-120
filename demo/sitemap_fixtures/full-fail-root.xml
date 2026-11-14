@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<sitemapindex xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  <sitemap><loc>https://fail.example.com/maps/good-1.xml</loc><lastmod>2026-06-30</lastmod></sitemap>
+  <sitemap><loc>https://fail.example.com/maps/missing.xml</loc></sitemap>
+  <sitemap><loc>https://fail.example.com/maps/broken-tail.xml</loc></sitemap>
+  <sitemap><loc>https://fail.example.com/maps/crc-bad.xml.gz</loc></sitemap>
+  <sitemap><loc>https://fail.example.com/maps/dup-fields.xml</loc></sitemap>
+  <sitemap><loc>https://fail.example.com/maps/bad-date.xml</loc></sitemap>
+  <sitemap><loc>https://fail.example.com/maps/cross-origin.xml</loc></sitemap>
+  <sitemap><loc>https://fail.example.com/maps/empty.xml</loc></sitemap>
+  <sitemap><loc>https://fail.example.com/maps/cycle-a.xml</loc></sitemap>
+  <sitemap><loc>https://fail.example.com/maps/good-2.xml</loc></sitemap>
+  <sitemap><loc>https://fail.example.com/maps/concat.xml.gz</loc></sitemap>
+</sitemapindex>

@@ -11,8 +11,11 @@
 ```
 archivestore/      可导入模块
 warcdb/            离线采集事实库（WARC 解析 + SQLite 事实库，见 WARCDB.md）
+eventledger/       离线爬虫运行事件账本（JSONL → SQLite，见 eventledger/README.md）
+robots_admission/  可解释的 robots.txt 抓取准入模块（见 robots_admission/README.md）
 demo/              可复做的端到端演练（run_demo.py）+ 独立参考解密器（refdec.py）
-                   + 事实库演练（run_warc_demo.py）
+                   + 事实库演练（run_warc_demo.py）+ 账本演练（run_eventledger_drill.py）
+                   + 抓取准入演练（run_robots_drill.py）
 tests/             pytest 回归测试
 ```
 
@@ -225,4 +228,24 @@ Content-Length 界定 WARC 记录边界，处理 response 与 revisit（含跨�
 
 ```
 python3 demo/run_warc_demo.py
+```
+
+---
+
+## 8. 抓取准入模块 robots_admission
+
+调度器在真正发出请求前，用 `robots_admission/` 判断某个采集器身份能否
+抓取某个 URL：按 origin 隔离的 SQLite 缓存（scheme/IDNA 主机/端口归一），
+User-agent 组选择（最长 token、同长度合并、`*` 不混入具体规则）、
+`*`/`$` 路径匹配与统一的百分号/UTF-8 字节规范化（`%2F` 不会变成路径
+分隔符），以及 200/304/404/410/429/5xx 的完整缓存语义（有效期区间、
+单调 fetched_at、ETag 校验、失败只记录不延寿）。每个判断都给出规范化
+origin、缓存表示、有效期限、选中组与命中规则的原文和行号；
+`needs_refresh` 表示没有可用策略，调度器必须暂缓而不是放行。缓存是
+判断的唯一权威来源，不读取 eventledger 账本或 warcdb 事实。API、批量
+入口与缓存语义详见 **[robots_admission/README.md](robots_admission/README.md)**；
+离线验收演练（不访问网络，150+ 项断言）：
+
+```
+python3 -I demo/run_robots_drill.py
 ```

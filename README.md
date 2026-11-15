@@ -16,12 +16,14 @@ robots_admission/  可解释的 robots.txt 抓取准入模块（见 robots_admis
 tableextract/      离线网页数据表提取器（本地 HTML → 矩形数据，见第 9 节）
 sitemapdiscover/   从站点地图发现待抓网页（根地图 + 本地映射 → 去重清单，见第 10 节）
 batchfetch/        有预算的批量网页抓取执行器（JSONL 清单 + 每站预算 → 真实 HTTP，见第 11 节）
+formfetch/         表单取数模块（导出页表单 → 正确 HTTP 请求 → 数据文件，见 formfetch/README.md）
 demo/              可复做的端到端演练（run_demo.py）+ 独立参考解密器（refdec.py）
                    + 事实库演练（run_warc_demo.py）+ 账本演练（run_eventledger_drill.py）
                    + 抓取准入演练（run_robots_drill.py）
                    + 数据表提取演练（run_table_drill.py，夹具在 demo/table_fixtures/）
                    + 站点地图发现演练（run_sitemap_drill.py，夹具在 demo/sitemap_fixtures/）
                    + 批量抓取接手演练（run_batchfetch_drill.py）
+                   + 表单取数接手演练（run_formfetch_drill.py）
 tests/             pytest 回归测试
 ```
 

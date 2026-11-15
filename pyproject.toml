@@ -10,4 +10,4 @@ requires-python = ">=3.10"
 dependencies = ["cryptography>=41"]
 
 [tool.setuptools]
-packages = ["archivestore", "warcdb", "eventledger", "robots_admission", "tableextract", "sitemapdiscover", "batchfetch"]
+packages = ["archivestore", "warcdb", "eventledger", "robots_admission", "tableextract", "sitemapdiscover", "batchfetch", "formfetch"]

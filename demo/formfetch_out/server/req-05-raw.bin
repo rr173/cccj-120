@@ -1,0 +1,7 @@
+GET /export HTTP/1.1
+Host: 127.0.0.1:41335
+Cookie: sid=sid-7f3a9c; wide=1
+User-Agent: formfetch/1.0 (python stdlib)
+Accept-Encoding: identity
+Connection: close
+

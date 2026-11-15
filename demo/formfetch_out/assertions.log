@@ -1,0 +1,124 @@
+export site on http://127.0.0.1:41335 (localhost only)
+STEP 1: fetch page, prepare multipart submission, inspect only
+  ok: both forms discovered
+  ok: first <base href> wins and resolves against the page URL
+  ok: method from the form
+  ok: relative action resolved against the base URL
+  ok: enctype from form
+  ok: ordered successful-control list matches the hard-coded expectation
+  ok: no submit request reached the server while we only prepared
+  ok: password value is masked in the preview
+  ok: password shown as mask
+STEP 2: invalid modifications and bad submitter choices
+  ok: modification rejected (unknown id) -> FormStructureError: no element with id 'no-such-control' on this page
+  ok: modification rejected (duplicated element id) -> FormStructureError: id 'dup' is not unique: 2 elements share it
+  ok: modification rejected (control of the other form) -> ModificationError: control 'other-region' does not belong to form 'export-form'; modifications cannot cross form boundaries
+  ok: modification rejected (control without a form) -> ModificationError: control 'orphan' does not belong to form 'export-form'; modifications cannot cross form boundaries
+  ok: modification rejected (disabled by fieldset) -> ModificationError: control 'fs-off' is disabled; a disabled control cannot be modified or submitted
+  ok: modification rejected (disabled control) -> ModificationError: control 'disabled-field' is disabled; a disabled control cannot be modified or submitted
+  ok: modification rejected (string to a checkbox) -> ModificationError: control 'agree' is a input type=checkbox; a string modification only applies to text-like inputs and textarea
+  ok: modification rejected (boolean to a text input) -> ModificationError: control 'region' is a input type=text; a boolean modification only applies to checkbox/radio
+  ok: modification rejected (list to a text input) -> ModificationError: control 'region' is a input type=text; a list modification only applies to select (option ids) or file (paths) controls
+  ok: modification rejected (disabled option) -> ModificationError: option 'fmt-none' of select 'format' is disabled and cannot be selected
+  ok: modification rejected (unknown option id) -> ModificationError: select 'format' has no option with id 'no-such-option'
+  ok: modification rejected (two options for a single select) -> ModificationError: select 'format' is single-select but 2 option ids were given
+  ok: modification rejected (option disabled via optgroup) -> ModificationError: option 'k-old1' of select 'kinds' is disabled and cannot be selected
+  ok: modification rejected (two radios of one group set true) -> ModificationError: radio controls 'sp-slow' and 'sp-fast' share group name='speed'; only one radio of a group may be set true
+  ok: modification rejected (two files for a non-multiple file control) -> ModificationError: file control 'upload' is not multiple but 2 paths were given
+  ok: modification rejected (missing upload file) -> ModificationError: upload path for control 'upload' is not a regular file: '/workspace/demo/formfetch_out/uploads/missing.bin'
+  ok: modification rejected (button modified) -> ModificationError: control 'btn-download' is a button type=submit; buttons are clicked (submitter_id), not modified
+  ok: modification rejected (unsupported value type) -> ModificationError: unsupported modification for control 'pw': int (expected string, boolean, or list of strings)
+  ok: modification rejected (string to a select) -> ModificationError: control 'kinds' is a select; a string modification only applies to text-like inputs and textarea
+  ok: submitter rejected (unknown submitter id) -> FormStructureError: no element with id 'no-such-btn' on this page
+  ok: submitter rejected (submitter of the other form) -> FormStructureError: submit button 'other-btn' does not belong to form 'export-form'
+  ok: submitter rejected (non-button as submitter) -> FormStructureError: control 'region' is a input type=text, not a button
+  ok: submitter rejected (disabled submitter) -> FormStructureError: submit button 'btn-disabled' is disabled and cannot be clicked
+  ok: submitter rejected (image button) -> UnsupportedFeatureError: image button 'img-btn' is not supported: it would require click coordinates (x/y)
+  ok: submitter rejected (text/plain enctype) -> UnsupportedFeatureError: enctype text/plain is not supported; use application/x-www-form-urlencoded or multipart/form-data
+  ok: submitter rejected (dialog method) -> UnsupportedFeatureError: form method 'dialog' is not supported; only GET and POST are
+  ok: unknown form id -> FormStructureError: no form with id 'no-such-form' on this page (forms present: ['export-form', 'other-form'])
+  ok: modification aimed at another form's control -> ModificationError: control 'region' does not belong to form 'other-form'; modifications cannot cross form boundaries
+  ok: not a single request was sent for invalid input
+STEP 3: multipart export, independent parse, byte compare
+  ok: submit returned 2xx
+  ok: delivered data file digest matches the pre-generated file
+  ok: request line recorded by the site
+  ok: announced Content-Length fully received
+  ok: client-computed Content-Length equals what the site received
+  ok: streamed bytes equal the announced Content-Length
+  ok: session cookie and path=/ cookie rode along
+  ok: Secure cookie not sent over plain HTTP
+  ok: site's independent parse matches the expected ordered parameters (CRLF-normalized)
+  ok: querylist.bin: received bytes identical to the upload
+  ok: querylist.bin: sha256 matches
+  ok: empty.txt: received bytes identical to the upload
+  ok: empty.txt: sha256 matches
+  ok: tiny.bin: received bytes identical to the upload
+  ok: tiny.bin: sha256 matches
+  ok: zero-byte file arrived as a named, empty part
+  ok: unselected file control is its own state (empty filename)
+STEP 4: second submitter overrides to GET (query replaced)
+  ok: formmethod=get on the submitter
+  ok: GET target path kept
+  ok: action's original query replaced, not merged
+  ok: GET entries match the hard-coded expectation
+  ok: password masked even inside a GET URL
+  ok: GET export delivered the data file
+  ok: site saw a GET
+  ok: site parsed the rebuilt query in order
+  ok: original action query never reached the wire
+STEP 5: third submitter overrides target + enctype
+  ok: method stays POST
+  ok: formaction target, action query preserved for POST
+  ok: formenctype override applied
+  ok: urlencoded export delivered
+  ok: POST kept the action's query
+  ok: urlencoded body parsed in order, duplicates kept
+STEP 6: cookie path isolation and Secure handling
+  ok: visited /other
+  ok: path=/ cookie sent to /other
+  ok: path=/export cookie NOT sent to /other
+  ok: Secure cookie never returned over plain HTTP
+STEP 7: expired ticket, redirect, oversized result
+  ok: expired ticket -> ResponseStatusError: POST http://127.0.0.1:41335/export/delivery failed: HTTP 403 Forbidden
+  ok: 403 surfaced
+  ok: no result file for a rejected ticket
+  ok: site still recorded the attempt
+  ok: redirect not followed -> ResponseStatusError: POST http://127.0.0.1:41335/export/redirect failed: HTTP 302 Found
+  ok: 302 surfaced with its Location
+  ok: exactly one request: no auto-follow, no resubmission
+  ok: no result for 3xx
+  ok: oversized result -> SizeLimitError: POST http://127.0.0.1:41335/export/toobig: response body exceeds the limit of 4096 bytes
+  ok: oversized response did not become a result
+  ok: temporary files cleaned up after failures
+STEP 8: existing output path refused before any network I/O
+  ok: existing result path -> OutputFileError: output path already exists, refusing to overwrite: /workspace/demo/formfetch_out/results/export-data.bin
+  ok: refusal happened before any request
+STEP 9: malformed pages are rejected, nothing submitted
+  ok: nested form -> HtmlSubsetError: line 1 col 25: nested <form> is not supported; close the outer form first
+  ok: mismatched end tag -> HtmlSubsetError: line 1 col 30: mismatched end tag </form>; <div> opened at line 1 is still open
+  ok: duplicate form id -> FormStructureError: form id 'f' is not unique: 2 forms share it
+STEP 10: CLI with JSON configs
+  ok: CLI preview exit 0 (stderr: )
+  ok: CLI preview did not submit
+  ok: CLI preview lists the ordered controls (page defaults, password masked)
+  ok: CLI preview sent only the page GET
+  ok: CLI run exit 0 (stderr: )
+  ok: CLI run delivered the data file
+  ok: CLI bad config exits 2 with a typed error
+  ok: no output on CLI error
+STEP 11: 192 MiB upload streams (child process)
+  ok: big file is 192 MiB
+  ok: big-upload child exit 0 (stderr: )
+  ok: big upload delivered the data file
+  ok: sender peak RSS 29836 KiB << 192 MiB file size (no whole-file residency)
+  info: big file = 201326592 bytes, sender peak RSS = 29836 KiB
+  ok: site received the full announced length
+  ok: received big file identical (sha256, size)
+ARTIFACTS: expected parameters and upload manifest
+  removed reproducible big file: big.bin
+  removed reproducible big file: req-20-part19.bin
+  removed reproducible big file: req-20-raw.bin
+  removed reproducible big file: req-20-body.bin
+artifacts under /workspace/demo/formfetch_out
+ALL 69 CHECKS PASSED

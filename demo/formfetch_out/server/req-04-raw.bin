@@ -1,0 +1,7 @@
+GET /export/query?pre-note=before&ticket=TICKET-VALID&region=north&ro=a+%26+b+%3Cx%3E&empty=&pw=&agree=yes&news=on&speed=med&format=xml&priority=mid-text&kinds=temp&kinds=wind&notes=line1%0D%0Aline2+%26+more&blank=&legend-note=in-legend&tag=a&tag=b&dupx1=d1&dupx2=d2&upload=&uploads=&attach=&go=query&post-note=after&ext-sel=x1 HTTP/1.1
+Host: 127.0.0.1:41335
+Cookie: sid=sid-7f3a9c; wide=1
+User-Agent: formfetch/1.0 (python stdlib)
+Accept-Encoding: identity
+Connection: close
+

@@ -1,0 +1,140 @@
+{
+  "rid": 9,
+  "kind": "multipart",
+  "parts": [
+    {
+      "kind": "text",
+      "name": "pre-note",
+      "value": "before"
+    },
+    {
+      "kind": "text",
+      "name": "ticket",
+      "value": "TICKET-EXPIRED"
+    },
+    {
+      "kind": "text",
+      "name": "region",
+      "value": "default-region"
+    },
+    {
+      "kind": "text",
+      "name": "ro",
+      "value": "a & b <x>"
+    },
+    {
+      "kind": "text",
+      "name": "empty",
+      "value": ""
+    },
+    {
+      "kind": "text",
+      "name": "pw",
+      "value": ""
+    },
+    {
+      "kind": "text",
+      "name": "news",
+      "value": "on"
+    },
+    {
+      "kind": "text",
+      "name": "speed",
+      "value": "med"
+    },
+    {
+      "kind": "text",
+      "name": "format",
+      "value": "xml"
+    },
+    {
+      "kind": "text",
+      "name": "priority",
+      "value": "mid-text"
+    },
+    {
+      "kind": "text",
+      "name": "kinds",
+      "value": "temp"
+    },
+    {
+      "kind": "text",
+      "name": "kinds",
+      "value": "wind"
+    },
+    {
+      "kind": "text",
+      "name": "notes",
+      "value": "line1\r\nline2 & more"
+    },
+    {
+      "kind": "text",
+      "name": "blank",
+      "value": ""
+    },
+    {
+      "kind": "text",
+      "name": "legend-note",
+      "value": "in-legend"
+    },
+    {
+      "kind": "text",
+      "name": "tag",
+      "value": "a"
+    },
+    {
+      "kind": "text",
+      "name": "tag",
+      "value": "b"
+    },
+    {
+      "kind": "text",
+      "name": "dupx1",
+      "value": "d1"
+    },
+    {
+      "kind": "text",
+      "name": "dupx2",
+      "value": "d2"
+    },
+    {
+      "kind": "file",
+      "name": "upload",
+      "filename": "",
+      "saved_as": "/workspace/demo/formfetch_out/server/req-09-part19.bin",
+      "size": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "kind": "file",
+      "name": "uploads",
+      "filename": "",
+      "saved_as": "/workspace/demo/formfetch_out/server/req-09-part20.bin",
+      "size": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "kind": "file",
+      "name": "attach",
+      "filename": "",
+      "saved_as": "/workspace/demo/formfetch_out/server/req-09-part21.bin",
+      "size": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "kind": "text",
+      "name": "go",
+      "value": "download"
+    },
+    {
+      "kind": "text",
+      "name": "post-note",
+      "value": "after"
+    },
+    {
+      "kind": "text",
+      "name": "ext-sel",
+      "value": "x1"
+    }
+  ]
+}

@@ -1,0 +1,18 @@
+{
+  "querylist.bin": {
+    "bytes": 312,
+    "sha256": "758d77b731e954567eaf5ad8557ec178edbf4853617708b4d2c81f2b0402e285"
+  },
+  "empty.txt": {
+    "bytes": 0,
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  "tiny.bin": {
+    "bytes": 32,
+    "sha256": "9c5629c53fc20f8720142aa4a84b271da598a2aea4d99564af3734f2f538f6ec"
+  },
+  "big.bin": {
+    "bytes": 201326592,
+    "sha256": "45bf709c53a784e848ee86d9ef5e7ef0bc0d05b93500a11d5fbe42ed2cbfe158"
+  }
+}
